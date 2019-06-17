@@ -43,15 +43,13 @@ class Agent:
         self.offer_endpoint = None
         self.hostname = hostname
         self.port = port
-        self.set_endpoint()
+        self.init_endpoint()
 
     def register_module(self, module):
         self.modules[module.FAMILY] = module(self)
         self.family_router.register(module.FAMILY, self.modules[module.FAMILY])
 
-    def set_endpoint(self):
-        """ hostname is optional when /etc/hostname is set properly
-        """
+    def init_endpoint(self):
         if not self.hostname:
             self.hostname = socket.gethostbyname(socket.gethostname())
         self.endpoint = self.offer_endpoint = 'http://' + self.hostname
