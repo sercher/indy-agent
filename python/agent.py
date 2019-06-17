@@ -9,6 +9,7 @@ import traceback
 from typing import Optional
 
 import aiohttp
+import socket
 from indy import wallet, did, error, crypto, pairwise
 
 import indy_sdk_utils as utils
@@ -24,7 +25,7 @@ class WalletConnectionException(Exception):
 class Agent:
     """ Agent class storing all needed elements for agent operation.
     """
-    def __init__(self):
+    def __init__(self, hostname=None, port=None):
         self.owner = None
         self.wallet_handle = None
         self.endpoint = None
@@ -39,10 +40,23 @@ class Agent:
         self.admin_key = None
         self.agent_admin_key = None
         self.outbound_admin_message_queue = asyncio.Queue()
+        self.offer_endpoint = None
+        self.hostname = hostname
+        self.port = port
+        self.set_endpoint()
 
     def register_module(self, module):
         self.modules[module.FAMILY] = module(self)
         self.family_router.register(module.FAMILY, self.modules[module.FAMILY])
+
+    def set_endpoint(self):
+        """ hostname is optional when /etc/hostname is set properly
+        """
+        if not self.hostname:
+            self.hostname = socket.gethostbyname(socket.gethostname())
+        self.endpoint = self.offer_endpoint = 'http://' + self.hostname
+        self.endpoint += ':' + str(self.port) + '/indy' if self.port else '/indy'
+        self.offer_endpoint += ':' + str(self.port) + '/offer' if self.port else '/offer'
 
     async def route_message_to_module(self, message):
         return await self.family_router.route(message)
