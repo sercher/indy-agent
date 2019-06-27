@@ -42,18 +42,22 @@ RUN useradd -ms /bin/bash -u $uid indy
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 68DB5E88
 RUN echo "deb https://repo.sovrin.org/sdk/deb xenial $indy_stream" >> /etc/apt/sources.list
 RUN apt-get update
-RUN apt-get install -y libindy
+RUN apt-get install -y libindy --allow-unauthenticated
 
-WORKDIR /app
+WORKDIR /app/python
 
-COPY . /app
+COPY ./python/ /app/python/
+COPY ./python_agent_utils/ /app/python_agent_utils/
 
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
 ARG PORT
+ARG HOST
 
 ENV PORT=${PORT}
+ENV HOST=${HOST}
 
 EXPOSE $PORT
+EXPOSE $HOST
 
-CMD python3.6 indy-agent.py $PORT
+CMD python3.6 indy-agent.py $PORT --hostname $HOST
