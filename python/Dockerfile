@@ -38,6 +38,15 @@ RUN apt-get update -y && apt-get install -y \
 # Add indy user
 RUN useradd -ms /bin/bash -u $uid indy
 
+# Luxoft certs
+ADD http://cert.luxoft.com/Luxoft-Root-CA.crt       /usr/local/share/ca-certificates/luxoft/
+ADD http://cert.luxoft.com/Luxoft-Issuing-CA.crt    /usr/local/share/ca-certificates/luxoft/
+ADD http://cert.luxoft.com/Luxoft-Issuing-CA-G2.crt /usr/local/share/ca-certificates/luxoft/
+RUN apt-get update \
+    && apt-get install -y ca-certificates \
+    && update-ca-certificates \
+    && apt-get clean
+
 # Install LibIndy
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 68DB5E88
 RUN echo "deb https://repo.sovrin.org/sdk/deb xenial $indy_stream" >> /etc/apt/sources.list
