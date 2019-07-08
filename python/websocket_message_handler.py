@@ -1,6 +1,9 @@
 import asyncio
 import aiohttp
 from aiohttp import web
+from message import Message
+from modules.admin_walletconnection import AdminWalletConnection
+from serializer.json_serializer import JSONSerializer as Serializer
 
 
 class WebSocketMessageHandler:
@@ -10,6 +13,11 @@ class WebSocketMessageHandler:
         self.ws = None
 
     async def ws_handler(self, request):
+
+        if self.ws is not None:
+            msg = Message({'@type': AdminWalletConnection.DISCONNECT})
+            await self.recv_q.put(Serializer.serialize(msg).decode('utf-8'))
+            # await self.ws.close()
 
         self.ws = web.WebSocketResponse()
         await self.ws.prepare(request)
