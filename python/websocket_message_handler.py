@@ -1,9 +1,6 @@
 import asyncio
 import aiohttp
 from aiohttp import web
-from message import Message
-from modules.admin_walletconnection import AdminWalletConnection
-from serializer.json_serializer import JSONSerializer as Serializer
 
 
 class WebSocketMessageHandler:
@@ -14,44 +11,44 @@ class WebSocketMessageHandler:
 
     async def ws_handler(self, request):
 
-        if self.ws is not None:
-            msg = Message({'@type': AdminWalletConnection.DISCONNECT})
-            await self.recv_q.put(Serializer.serialize(msg).decode('utf-8'))
-            # await self.ws.close()
+        ws = web.WebSocketResponse()
+        await ws.prepare(request)
 
-        self.ws = web.WebSocketResponse()
-        await self.ws.prepare(request)
+        if self.ws is not None:
+            await self.ws.write_eof()
+
+        self.ws = ws
 
         _, unfinished = await asyncio.wait(
             [
-                self._websocket_receive(),
-                self._websocket_send()
+                self._websocket_receive(ws),
+                self._websocket_send(ws)
             ],
             return_when=asyncio.FIRST_COMPLETED
         )
         for task in unfinished:
             task.cancel()
 
-        ws = self.ws
-        self.ws = None
         return ws
 
-    async def _websocket_receive(self):
-        async for websocket_message in self.ws:
+    async def _websocket_receive(self, ws):
+        async for websocket_message in ws:
             if websocket_message.type == aiohttp.WSMsgType.TEXT:
                 if websocket_message.data == 'close':
-                    await self.ws.close()
+                    await ws.close()
+                    break
                 else:
                     print('Received "{}"'.format(websocket_message.data))
                     await self.recv_q.put(websocket_message.data)
             elif websocket_message.type == aiohttp.WSMsgType.ERROR:
                 print('ws connection closed with exception %s' %
-                      self.ws.exception())
+                      ws.exception())
+                break
 
         print('websocket connection closed')
 
-    async def _websocket_send(self):
+    async def _websocket_send(self, ws):
         while True:
             msg_to_send = await self.send_q.get()
             print('Sending "{}"'.format(msg_to_send))
-            await self.ws.send_str(msg_to_send)
+            await ws.send_str(msg_to_send)
