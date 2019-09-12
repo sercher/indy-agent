@@ -17,5 +17,6 @@ class PostMessageHandler:
             raise web.HTTPUnauthorized()
 
         msg = await request.read()
+        print('Queueing "{}"'.format(msg))
         await self.msg_queue.put(msg)
         raise web.HTTPAccepted()

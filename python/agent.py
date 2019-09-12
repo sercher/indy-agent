@@ -67,7 +67,7 @@ class Agent:
             if msg:
                 return await self.route_message_to_module(msg)
         except Exception as e:
-            print("\n\n--- Message Processing failed --- \n\n")
+            print("\n\n--- Message Processing failed --- \n\nMessage:\n\n" + str(wire_msg_bytes) + "\n\n")
             traceback.print_exc()
 
     async def start(self):
@@ -273,6 +273,7 @@ class Agent:
             # Message IS encrypted so unpack it
             try:
                 msg = await self.unpack_agent_message(wire_msg)
+                print('Decoded incoming "{}"'.format(msg))
             except Exception as e:
                 print('Failed to unpack message: {}\n\nError: {}'.format(wire_msg, e))
                 traceback.print_exc()
