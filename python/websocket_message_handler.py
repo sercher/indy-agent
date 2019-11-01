@@ -54,3 +54,7 @@ class WebSocketMessageHandler:
                 break
             print('Sending "{}"'.format(msg_to_send))
             await ws.send_str(msg_to_send)
+            if ws.closed or ws._closing:
+                # avoid sending to closed socket and route the message to concurrent instance
+                await self.send_q.put(msg_to_send)
+                break
